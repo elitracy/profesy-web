@@ -1,15 +1,9 @@
 <script lang="ts">
-	import { searchCourses } from '../../utils/courses';
+	import { searchCourses, getProfessorSemesters } from '../../utils/courses';
 	import { getProfessorById } from '../../utils/professors';
 	import type { Course, Professor } from '../../types';
 
-	let courseSearchInput: string = '';
-	let courses: Course[] = [];
-	let selectedCourse: Course | null;
-
-	let professors: (Professor | null)[] = [];
-	// let selectedProfessor: Course | null;
-
+	// API-state helper functions
 	const createUniqueCourseList = (courseList: Course[]) => {
 		const uniqueCoursesMap = courseList.reduce((map, obj) => {
 			const key = obj.name + '-' + obj.number;
@@ -40,6 +34,21 @@
 
 		return uniqueProfessors;
 	};
+
+	const createSemesterList = async (professor: Professor | null, course: Course | null) => {
+		const { data, status } = await getProfessorSemesters(professor, course);
+		return data && status === 200 ? data : [];
+	};
+
+	// state
+	let courseSearchInput: string = '';
+	let courses: Course[] = [];
+	let selectedCourse: Course | null;
+
+	let professors: (Professor | null)[] = [];
+	let selectedProfessor: Professor | null;
+
+	let semesters: Course[] = [];
 </script>
 
 <h1>Hello from Courses</h1>
@@ -48,13 +57,17 @@
 	<p>Selected Course: {selectedCourse.name + selectedCourse.number}</p>
 {/if}
 
+{#if selectedProfessor}
+	<p>Selected Professor: {selectedProfessor.name}</p>
+{/if}
+
 <input
 	type="text"
 	placeholder="Search Courses"
 	bind:value={courseSearchInput}
 	on:input={async () => {
+		professors = [];
 		let { data, status } = await searchCourses(courseSearchInput);
-		console.log(data);
 		if (status === 200 && data) {
 			courses = createUniqueCourseList(data);
 		}
@@ -70,7 +83,6 @@
 
 			let { data } = await searchCourses(selectedCourse.name + selectedCourse.number);
 			professors = await createUniqueProfessorList(data);
-			console.log(professors);
 		}}
 	>
 		{course.name}
@@ -84,6 +96,15 @@
 
 {#each professors as professor}
 	{#if professor}
-		<p>{professor.name}</p>
+		<button
+			on:click={async () => {
+				selectedProfessor = professor;
+				semesters = await createSemesterList(selectedProfessor, selectedCourse);
+			}}>{professor.name}</button
+		>
 	{/if}
+{/each}
+
+{#each semesters as semester}
+	<p>{JSON.stringify(semester, null, 2)}</p>
 {/each}
