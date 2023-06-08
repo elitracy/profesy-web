@@ -3,6 +3,8 @@
 	import { getProfessorById } from '../../utils/professors';
 	import type { Course, Professor } from '../../types';
 
+	const COURSE_LIST_LENGTH = 10;
+
 	// API-state helper functions
 	const createUniqueCourseList = (courseList: Course[]) => {
 		const uniqueCoursesMap = courseList.reduce((map, obj) => {
@@ -68,9 +70,8 @@
 	on:input={async () => {
 		professors = [];
 		let { data, status } = await searchCourses(courseSearchInput);
-		if (status === 200 && data) {
-			courses = createUniqueCourseList(data);
-		}
+		if (status === 200 && data) courses = createUniqueCourseList(data);
+		courses = courses.splice(0, COURSE_LIST_LENGTH);
 	}}
 	class="border-black border-2 rounded-lg p-1"
 />
